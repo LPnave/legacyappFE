@@ -4,7 +4,7 @@ import type { Node, Edge, NodeChange } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button, Tag, Typography, Spin, Input, Modal, Card } from 'antd';
 import { useParams } from 'react-router-dom';
-import { fetchProjectById, fetchPagesByProject, fetchWorkflowsByProject, updatePagePosition, fetchUserById, fetchCommentsByPage, addComment, updateProject } from '../../infrastructure/api';
+import { fetchProjectById, fetchPagesByProject, fetchWorkflowsByProject, updatePagePosition, fetchUserById, fetchCommentsByPage, addComment } from '../../infrastructure/api';
 import AddScreensModal from './AddScreensModal';
 import { message } from 'antd';
 import { createPage } from '../../infrastructure/api';
@@ -33,7 +33,7 @@ function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
 const PageNodeContext = React.createContext<{ setNodes: React.Dispatch<React.SetStateAction<Node[]>> }>(null!);
 
 // CommentModal component
-const CommentModal: React.FC<{ pageId: string; open: boolean; onClose: () => void; userId: string | undefined }> = ({ pageId, open, onClose, userId }) => {
+const CommentModal: React.FC<{ pageId: string; open: boolean; onClose: () => void; userId: string | undefined }> = ({ pageId, open, onClose }) => {
   const [comments, setComments] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [input, setInput] = React.useState('');
@@ -236,9 +236,8 @@ const WorkflowBuilderPage: React.FC = () => {
     try {
       // For each file, upload to Supabase and create a page with the public URL
       const newPages = [];
-      const userId = 'demo-user'; // Replace with real user ID if available
       for (const file of files) {
-        const screenshotPath = await uploadFileToSupabase(file, userId);
+        const screenshotPath = await uploadFileToSupabase(file);
         const page = await createPage({
           projectId: id ?? '',
           title: file.name,
@@ -313,7 +312,7 @@ const WorkflowBuilderPage: React.FC = () => {
   const handleStatusChange = async (newStatus: string) => {
     if (project.Status === newStatus) return;
     try {
-      const updated = await updateProject(project.ProjectID, { status: newStatus });
+      //const updated = await updateProject(project.ProjectID, { status: newStatus });
       setProject((prev: any) => ({ ...prev, Status: newStatus }));
       message.success('Project status updated!');
     } catch (e) {
@@ -354,9 +353,9 @@ const WorkflowBuilderPage: React.FC = () => {
     // Screens (images and titles)
     for (const node of nodes) {
       if (y > 250) { doc.addPage(); y = 15; }
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.text(node.data.label || 'Untitled', left, y);
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       y += lineHeight;
       if (node.data.screenshotPath) {
         try {

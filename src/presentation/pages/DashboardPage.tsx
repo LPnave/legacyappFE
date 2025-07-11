@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Row, Col, Typography, Tag, Modal, Spin } from 'antd';
+import { Button, Card, Row, Col, Typography, Spin } from 'antd';
 import { PlusOutlined, DeleteOutlined, FileTextOutlined, UserOutlined, CalendarOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { colors } from '../../styles/colors';
 import CreateProjectModal from './CreateProjectModal';
 import { fetchProjects, fetchUserById } from '../../infrastructure/api';
 import { useNavigate } from 'react-router-dom';
 
-const { Title, Paragraph } = Typography;
+const { Title} = Typography;
 
 const DashboardPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

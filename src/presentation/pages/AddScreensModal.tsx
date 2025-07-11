@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Modal, Upload, Button, Typography, message } from 'antd';
+import { Modal, Upload, Button, Typography } from 'antd';
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { colors } from '../../styles/colors';
 
-const { Title, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 interface AddScreensModalProps {
   open: boolean;

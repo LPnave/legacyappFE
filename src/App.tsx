@@ -1,7 +1,3 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
 import React from 'react';
 import { Layout, Button, Menu } from 'antd';
 import { Route, Routes, useNavigate } from 'react-router-dom';
