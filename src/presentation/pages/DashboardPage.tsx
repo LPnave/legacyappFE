@@ -114,7 +114,7 @@ const DashboardPage: React.FC = () => {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <FileTextOutlined style={{ color: '#64748b' }} />
-                    <span>0 screens</span>
+                    <span>{project.pagesCount ?? 0} screens</span>
                   </div>
                 </div>
                 <Button

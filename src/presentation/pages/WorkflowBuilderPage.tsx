@@ -350,7 +350,7 @@ const WorkflowBuilderPage: React.FC = () => {
     doc.text('Screens:', left, y);
     y += lineHeight;
 
-    // Screens (images and titles)
+    // Screens (images, titles, and comments)
     for (const node of nodes) {
       if (y > 250) { doc.addPage(); y = 15; }
       doc.setFont('helvetica', 'bold');
@@ -359,24 +359,35 @@ const WorkflowBuilderPage: React.FC = () => {
       y += lineHeight;
       if (node.data.screenshotPath) {
         try {
-          // Load image as base64
-          const imgData = await new Promise<string>((resolve, reject) => {
+          // Load image as base64 and preserve aspect ratio
+          const imgData = await new Promise<{ dataUrl: string, width: number, height: number }>((resolve, reject) => {
             const img = new window.Image();
             img.crossOrigin = 'Anonymous';
             img.onload = function () {
+              // Use naturalWidth/naturalHeight for accurate sizing
+              const w = img.naturalWidth || img.width;
+              const h = img.naturalHeight || img.height;
+              if (!w || !h) return reject(new Error('Image has invalid dimensions'));
+              // Strict aspect ratio preservation
+              const widthRatio = maxImgWidth / w;
+              const heightRatio = maxImgHeight / h;
+              const ratio = Math.min(widthRatio, heightRatio, 1);
+              const scaledWidth = w * ratio;
+              const scaledHeight = h * ratio;
               const canvas = document.createElement('canvas');
-              let ratio = Math.min(maxImgWidth / img.width, maxImgHeight / img.height, 1);
-              canvas.width = img.width * ratio;
-              canvas.height = img.height * ratio;
+              canvas.width = scaledWidth;
+              canvas.height = scaledHeight;
               const ctx = canvas.getContext('2d');
-              ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-              resolve(canvas.toDataURL('image/jpeg', 0.92));
+              ctx?.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+              resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.92), width: scaledWidth, height: scaledHeight });
             };
-            img.onerror = reject;
+            img.onerror = () => reject(new Error('Failed to load image for PDF export'));
             img.src = node.data.screenshotPath;
           });
-          doc.addImage(imgData, 'JPEG', left, y, maxImgWidth, maxImgHeight);
-          y += maxImgHeight + 4;
+          // Center image horizontally
+          const xCentered = left + (maxImgWidth - imgData.width) / 2;
+          doc.addImage(imgData.dataUrl, 'JPEG', xCentered, y, imgData.width, imgData.height);
+          y += imgData.height + 4;
         } catch {
           doc.setFontSize(11);
           doc.text('(Image failed to load)', left, y);
@@ -387,6 +398,29 @@ const WorkflowBuilderPage: React.FC = () => {
         doc.text('(No image)', left, y);
         y += lineHeight;
       }
+      // Fetch and render comments for this page
+      try {
+        const comments = await fetchCommentsByPage(node.id);
+        if (comments.length > 0) {
+          doc.setFontSize(12);
+          doc.setTextColor(60, 60, 60);
+          doc.text('Comments:', left, y);
+          y += lineHeight;
+          doc.setFontSize(11);
+          for (const c of comments) {
+            let commentText = `- ${c.Content}`;
+            if (c.UserName) commentText += ` (by ${c.UserName})`;
+            if (c.CreatedAt) {
+              const dateStr = new Date(c.CreatedAt).toLocaleString();
+              commentText += ` [${dateStr}]`;
+            }
+            doc.text(commentText, left + 4, y);
+            y += lineHeight;
+            if (y > 270) { doc.addPage(); y = 15; }
+          }
+          doc.setTextColor(0, 0, 0);
+        }
+      } catch {}
       y += 2;
     }
     doc.save(`${project.Title.replace(/\s+/g, '_')}_workflow.pdf`);
